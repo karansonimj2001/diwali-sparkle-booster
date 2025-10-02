@@ -10,10 +10,12 @@ import CrossSell from "@/components/CrossSell";
 import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
 import StickyBottomBar from "@/components/StickyBottomBar";
+import AdminLink from "@/components/AdminLink";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
+      <AdminLink />
       <TopBar />
       <HeroSection />
       <BenefitsStrip />
