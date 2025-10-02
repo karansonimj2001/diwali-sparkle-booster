@@ -1,0 +1,34 @@
+import { MessageCircle, Shield, CreditCard } from "lucide-react";
+
+const TopBar = () => {
+  return (
+    <div className="sticky top-0 z-50 bg-primary text-primary-foreground shadow-md">
+      <div className="container mx-auto px-4 py-2">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">Diwali Special</span>
+            <span className="hidden sm:inline">•</span>
+            <span className="hidden sm:inline">Free gift wrap</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <a 
+              href="https://wa.me/919876543210" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 hover:opacity-80 transition-smooth"
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">WhatsApp</span>
+            </a>
+            <div className="flex items-center gap-2 text-xs opacity-90">
+              <Shield className="h-3 w-3" />
+              <span className="hidden md:inline">UPI • COD • Cards</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TopBar;
