@@ -4,17 +4,98 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Gift, Clock, ShoppingCart } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import UrgencyTimer from "./UrgencyTimer";
+import ViewingCount from "./ViewingCount";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 const PriceSection = () => {
   const [giftWrap, setGiftWrap] = useState(true);
   const [hidePrice, setHidePrice] = useState(false);
   const [giftNote, setGiftNote] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const basePrice = 699;
   const mrp = 999;
   const giftWrapPrice = giftWrap ? 49 : 0;
   const totalPrice = basePrice + giftWrapPrice;
   const savings = mrp - basePrice;
+
+  const handlePayment = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          amount: totalPrice,
+          currency: 'INR',
+          giftWrap,
+          giftNote,
+          hidePrice,
+        },
+      });
+
+      if (error) throw error;
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_key',
+        amount: data.amount,
+        currency: data.currency,
+        name: 'Diwali Special Earrings',
+        description: 'Premium Diwali Gift Set',
+        order_id: data.orderId,
+        handler: async function (response: any) {
+          try {
+            const { error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+            });
+
+            if (verifyError) throw verifyError;
+
+            toast({
+              title: "Payment Successful!",
+              description: "Your order has been confirmed. Thank you!",
+            });
+          } catch (err: any) {
+            toast({
+              variant: "destructive",
+              title: "Payment verification failed",
+              description: err.message,
+            });
+          }
+        },
+        prefill: {
+          name: '',
+          email: '',
+          contact: '',
+        },
+        theme: {
+          color: '#FF6B35',
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message || "Failed to create order",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section id="price-section" className="py-12 md:py-16 bg-gradient-to-b from-background to-muted/20">
@@ -34,7 +115,9 @@ const PriceSection = () => {
 
             {/* Pricing */}
             <div className="p-6 md:p-8">
-              <div className="text-center mb-8">
+              <UrgencyTimer />
+              <ViewingCount />
+              <div className="text-center mb-8 mt-6">
                 <div className="flex items-center justify-center gap-4 mb-2">
                   <span className="text-2xl text-muted-foreground line-through">₹{mrp}</span>
                   <span className="text-5xl font-bold text-primary">₹{basePrice}</span>
@@ -106,11 +189,17 @@ const PriceSection = () => {
 
               {/* CTA Buttons */}
               <div className="space-y-3">
-                <Button variant="gradient" size="xl" className="w-full">
+                <Button 
+                  variant="gradient" 
+                  size="xl" 
+                  className="w-full"
+                  onClick={handlePayment}
+                  disabled={loading}
+                >
                   <ShoppingCart className="h-5 w-5" />
-                  Buy Now — ₹{totalPrice}
+                  {loading ? "Processing..." : `Buy Now — ₹${totalPrice}`}
                 </Button>
-                <Button variant="outline" size="lg" className="w-full">
+                <Button variant="outline" size="lg" className="w-full" disabled={loading}>
                   Add to Cart
                 </Button>
               </div>

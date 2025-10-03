@@ -18,11 +18,17 @@ interface PageContent {
   button_link: string | null;
 }
 
+interface OrderStats {
+  totalOrders: number;
+  todayOrders: number;
+}
+
 const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [content, setContent] = useState<PageContent[]>([]);
   const [saving, setSaving] = useState<string | null>(null);
+  const [orderStats, setOrderStats] = useState<OrderStats>({ totalOrders: 0, todayOrders: 0 });
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -57,6 +63,31 @@ const Admin = () => {
 
     setIsAdmin(true);
     loadContent();
+    loadOrderStats();
+  };
+
+  const loadOrderStats = async () => {
+    try {
+      // Get total orders
+      const { count: totalCount } = await supabase
+        .from("orders")
+        .select("*", { count: "exact", head: true });
+
+      // Get today's orders
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const { count: todayCount } = await supabase
+        .from("orders")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", today.toISOString());
+
+      setOrderStats({
+        totalOrders: totalCount || 0,
+        todayOrders: todayCount || 0,
+      });
+    } catch (error: any) {
+      console.error("Error loading order stats:", error);
+    }
   };
 
   const loadContent = async () => {
@@ -141,6 +172,28 @@ const Admin = () => {
             <LogOut className="h-4 w-4 mr-2" />
             Sign Out
           </Button>
+        </div>
+
+        {/* Order Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Total Orders</CardTitle>
+              <CardDescription>All time orders received</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-4xl font-bold text-primary">{orderStats.totalOrders}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Today's Orders</CardTitle>
+              <CardDescription>Orders received today</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-4xl font-bold text-secondary">{orderStats.todayOrders}</p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid gap-6">
