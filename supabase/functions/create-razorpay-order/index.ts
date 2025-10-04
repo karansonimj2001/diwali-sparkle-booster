@@ -14,10 +14,13 @@ serve(async (req) => {
   try {
     const { amount, currency = 'INR', giftWrap, giftNote, hidePrice, customerEmail, customerPhone, customerName } = await req.json();
 
+    console.log('Creating order with amount:', amount);
+
     const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID');
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
 
     if (!razorpayKeyId || !razorpayKeySecret) {
+      console.error('Razorpay credentials not configured');
       throw new Error('Razorpay credentials not configured');
     }
 
@@ -43,8 +46,9 @@ serve(async (req) => {
     }
 
     const razorpayOrder = await razorpayResponse.json();
+    console.log('Razorpay order created:', razorpayOrder.id);
 
-    // Save order to database
+    // Save order to database using service role key to bypass RLS
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -57,6 +61,8 @@ serve(async (req) => {
       const { data: { user } } = await supabase.auth.getUser(token);
       userId = user?.id || null;
     }
+
+    console.log('Saving order to database, user_id:', userId);
 
     const { data: order, error: dbError } = await supabase
       .from('orders')
@@ -78,8 +84,10 @@ serve(async (req) => {
 
     if (dbError) {
       console.error('Database error:', dbError);
-      throw new Error('Failed to save order');
+      throw new Error(`Failed to save order: ${dbError.message}`);
     }
+
+    console.log('Order saved successfully:', order.id);
 
     return new Response(
       JSON.stringify({
@@ -93,7 +101,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error creating order:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || 'Unknown error',
+        details: error.toString()
+      }),
       { 
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
