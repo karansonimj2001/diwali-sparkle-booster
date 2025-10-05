@@ -29,6 +29,10 @@ export type Database = {
           razorpay_order_id: string
           razorpay_payment_id: string | null
           razorpay_signature: string | null
+          shipping_address: string | null
+          shipping_city: string | null
+          shipping_pincode: string | null
+          shipping_state: string | null
           status: string
           updated_at: string
           user_id: string | null
@@ -47,6 +51,10 @@ export type Database = {
           razorpay_order_id: string
           razorpay_payment_id?: string | null
           razorpay_signature?: string | null
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_pincode?: string | null
+          shipping_state?: string | null
           status?: string
           updated_at?: string
           user_id?: string | null
@@ -65,6 +73,10 @@ export type Database = {
           razorpay_order_id?: string
           razorpay_payment_id?: string | null
           razorpay_signature?: string | null
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_pincode?: string | null
+          shipping_state?: string | null
           status?: string
           updated_at?: string
           user_id?: string | null

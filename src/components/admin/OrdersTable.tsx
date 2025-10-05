@@ -32,6 +32,10 @@ interface Order {
   gift_note: string | null;
   hide_price: boolean;
   razorpay_payment_id: string | null;
+  shipping_address: string | null;
+  shipping_city: string | null;
+  shipping_state: string | null;
+  shipping_pincode: string | null;
 }
 
 interface OrdersTableProps {
@@ -77,7 +81,11 @@ const OrdersTable = ({ orders, onStatusUpdate }: OrdersTableProps) => {
       "Status",
       "Gift Wrap",
       "Gift Note",
-      "Payment ID"
+      "Payment ID",
+      "Shipping Address",
+      "City",
+      "State",
+      "Pincode"
     ];
 
     const rows = orders.map(order => [
@@ -90,7 +98,11 @@ const OrdersTable = ({ orders, onStatusUpdate }: OrdersTableProps) => {
       order.status,
       order.gift_wrap ? "Yes" : "No",
       order.gift_note || "N/A",
-      order.razorpay_payment_id || "N/A"
+      order.razorpay_payment_id || "N/A",
+      order.shipping_address || "N/A",
+      order.shipping_city || "N/A",
+      order.shipping_state || "N/A",
+      order.shipping_pincode || "N/A"
     ]);
 
     const csvContent = [

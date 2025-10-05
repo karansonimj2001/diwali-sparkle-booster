@@ -34,6 +34,10 @@ interface Order {
   gift_note: string | null;
   hide_price: boolean;
   razorpay_payment_id: string | null;
+  shipping_address: string | null;
+  shipping_city: string | null;
+  shipping_state: string | null;
+  shipping_pincode: string | null;
 }
 
 interface Stats {

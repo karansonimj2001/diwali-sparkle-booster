@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import UrgencyTimer from "./UrgencyTimer";
 import ViewingCount from "./ViewingCount";
+import { CheckoutForm, CheckoutFormData } from "./CheckoutForm";
 
 declare global {
   interface Window {
@@ -16,10 +18,12 @@ declare global {
 }
 
 const PriceSection = () => {
+  const navigate = useNavigate();
   const [giftWrap, setGiftWrap] = useState(true);
   const [hidePrice, setHidePrice] = useState(false);
   const [giftNote, setGiftNote] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const { toast } = useToast();
 
   const basePrice = 699;
@@ -28,7 +32,12 @@ const PriceSection = () => {
   const totalPrice = basePrice + giftWrapPrice;
   const savings = mrp - basePrice;
 
-  const handlePayment = async () => {
+  const handleCheckoutSubmit = (customerData: CheckoutFormData) => {
+    setCheckoutOpen(false);
+    initiatePayment(customerData);
+  };
+
+  const initiatePayment = async (customerData: CheckoutFormData) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
@@ -38,6 +47,13 @@ const PriceSection = () => {
           giftWrap,
           giftNote,
           hidePrice,
+          customerName: customerData.customerName,
+          customerEmail: customerData.customerEmail,
+          customerPhone: customerData.customerPhone,
+          shippingAddress: customerData.shippingAddress,
+          shippingCity: customerData.shippingCity,
+          shippingState: customerData.shippingState,
+          shippingPincode: customerData.shippingPincode,
         },
       });
 
@@ -64,27 +80,43 @@ const PriceSection = () => {
 
             toast({
               title: "Payment Successful!",
-              description: "Your order has been confirmed. Thank you!",
+              description: "Redirecting to confirmation...",
             });
+
+            navigate(`/thank-you?orderId=${data.dbOrderId}`);
           } catch (err: any) {
             toast({
               variant: "destructive",
               title: "Payment verification failed",
               description: err.message,
             });
+            setLoading(false);
           }
         },
         prefill: {
-          name: '',
-          email: '',
-          contact: '',
+          name: customerData.customerName,
+          email: customerData.customerEmail,
+          contact: customerData.customerPhone,
         },
         theme: {
           color: '#FF6B35',
         },
+        modal: {
+          ondismiss: function() {
+            setLoading(false);
+          }
+        }
       };
 
       const razorpay = new window.Razorpay(options);
+      razorpay.on('payment.failed', function () {
+        toast({
+          variant: "destructive",
+          title: "Payment failed",
+          description: "Please try again",
+        });
+        setLoading(false);
+      });
       razorpay.open();
     } catch (err: any) {
       toast({
@@ -92,7 +124,6 @@ const PriceSection = () => {
         title: "Error",
         description: err.message || "Failed to create order",
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -193,7 +224,7 @@ const PriceSection = () => {
                   variant="gradient" 
                   size="xl" 
                   className="w-full"
-                  onClick={handlePayment}
+                  onClick={() => setCheckoutOpen(true)}
                   disabled={loading}
                 >
                   <ShoppingCart className="h-5 w-5" />
@@ -211,6 +242,13 @@ const PriceSection = () => {
           </div>
         </div>
       </div>
+
+      <CheckoutForm
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        onSubmit={handleCheckoutSubmit}
+        isProcessing={loading}
+      />
     </section>
   );
 };

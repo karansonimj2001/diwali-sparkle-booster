@@ -12,7 +12,20 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, currency = 'INR', giftWrap, giftNote, hidePrice, customerEmail, customerPhone, customerName } = await req.json();
+    const { 
+      amount, 
+      currency = 'INR', 
+      giftWrap, 
+      giftNote, 
+      hidePrice, 
+      customerEmail, 
+      customerPhone, 
+      customerName,
+      shippingAddress,
+      shippingCity,
+      shippingState,
+      shippingPincode
+    } = await req.json();
 
     console.log('Creating order with amount:', amount);
 
@@ -78,6 +91,10 @@ serve(async (req) => {
         customer_email: customerEmail,
         customer_phone: customerPhone,
         customer_name: customerName,
+        shipping_address: shippingAddress,
+        shipping_city: shippingCity,
+        shipping_state: shippingState,
+        shipping_pincode: shippingPincode,
       })
       .select()
       .single();
@@ -98,7 +115,7 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating order:', error);
     return new Response(
       JSON.stringify({ 
