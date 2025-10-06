@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
-import heroImage from "@/assets/hero-gifting.jpg";
+import defaultHeroImage from "@/assets/hero-gifting.jpg";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -35,7 +35,7 @@ const HeroSection = () => {
           <div className="order-2 lg:order-1">
             <div className="relative rounded-2xl overflow-hidden shadow-card">
               <img 
-                src={heroImage} 
+                src={content.image_url || defaultHeroImage} 
                 alt="Brother gifting earrings to mother during Diwali celebration"
                 className="w-full h-auto object-cover"
               />

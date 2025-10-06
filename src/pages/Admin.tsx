@@ -28,6 +28,7 @@ interface PageContent {
   order_by_date: string | null;
   stock_count: number | null;
   content_json: any;
+  image_url: string | null;
 }
 
 interface Order {

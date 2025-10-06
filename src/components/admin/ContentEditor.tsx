@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ImageUploader } from "./ImageUploader";
 
 interface PageContent {
   id: string;
@@ -23,6 +24,7 @@ interface PageContent {
   order_by_date: string | null;
   stock_count: number | null;
   content_json: any;
+  image_url: string | null;
 }
 
 interface ContentEditorProps {
@@ -77,6 +79,7 @@ export const ContentEditor = ({ content, onUpdate }: ContentEditorProps) => {
         order_by_date: item.order_by_date,
         stock_count: item.stock_count,
         content_json: item.content_json,
+        image_url: item.image_url,
         updated_at: new Date().toISOString(),
       })
       .eq("id", item.id);
@@ -205,6 +208,11 @@ export const ContentEditor = ({ content, onUpdate }: ContentEditorProps) => {
                   />
                 </div>
               </div>
+              <ImageUploader
+                label="Hero Image"
+                currentImageUrl={current.image_url || ""}
+                onImageUploaded={(url) => updateField(item.id, "image_url", url)}
+              />
               <Button onClick={() => handleUpdate(current)} disabled={saving === item.id} className="w-full">
                 {saving === item.id ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : "Save Changes"}
               </Button>
@@ -290,11 +298,13 @@ export const ContentEditor = ({ content, onUpdate }: ContentEditorProps) => {
 
       case 'why_choose_us':
       case 'faq':
+      case 'product_gallery':
+      case 'packaging':
         return (
           <Card key={item.id}>
             <CardHeader>
               <CardTitle className="capitalize">{item.section.replace(/_/g, ' ')}</CardTitle>
-              <CardDescription>Edit {item.section} content - Advanced JSON editing required</CardDescription>
+              <CardDescription>Edit {item.section} content</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -313,8 +323,32 @@ export const ContentEditor = ({ content, onUpdate }: ContentEditorProps) => {
                   />
                 </div>
               )}
+              {(item.section === 'packaging') && (
+                <ImageUploader
+                  label="Packaging Image"
+                  currentImageUrl={current.content_json?.image_url || current.image_url || ""}
+                  onImageUploaded={(url) => updateJsonField(item.id, "image_url", url)}
+                />
+              )}
+              {(item.section === 'product_gallery') && (
+                <div className="space-y-2">
+                  <Label>Product Images (Advanced - JSON Array)</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Upload images and add to JSON as: {`[{"url": "image_url", "alt": "description"}]`}
+                  </p>
+                  <ImageUploader
+                    label="Upload New Product Image"
+                    onImageUploaded={(url) => {
+                      toast({
+                        title: "Image uploaded",
+                        description: `URL: ${url} - Add this to the images array in the JSON below`,
+                      });
+                    }}
+                  />
+                </div>
+              )}
               <div className="space-y-2">
-                <Label>Content JSON (Advanced)</Label>
+                <Label>Content JSON {item.section === 'product_gallery' && '(Add uploaded image URLs here)'}</Label>
                 <Textarea
                   value={JSON.stringify(current.content_json, null, 2)}
                   onChange={(e) => {
@@ -325,7 +359,7 @@ export const ContentEditor = ({ content, onUpdate }: ContentEditorProps) => {
                       // Invalid JSON, don't update
                     }
                   }}
-                  rows={10}
+                  rows={12}
                   className="font-mono text-xs"
                 />
               </div>
