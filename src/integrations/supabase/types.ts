@@ -89,39 +89,57 @@ export type Database = {
           button_text: string | null
           content_json: Json | null
           description: string | null
+          gift_wrap_price: number | null
           id: string
           image_url: string | null
+          mrp: number | null
+          order_by_date: string | null
+          price: number | null
           section: string
+          stock_count: number | null
           subtitle: string | null
           title: string | null
           updated_at: string | null
           updated_by: string | null
+          whatsapp_number: string | null
         }
         Insert: {
           button_link?: string | null
           button_text?: string | null
           content_json?: Json | null
           description?: string | null
+          gift_wrap_price?: number | null
           id?: string
           image_url?: string | null
+          mrp?: number | null
+          order_by_date?: string | null
+          price?: number | null
           section: string
+          stock_count?: number | null
           subtitle?: string | null
           title?: string | null
           updated_at?: string | null
           updated_by?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
           button_link?: string | null
           button_text?: string | null
           content_json?: Json | null
           description?: string | null
+          gift_wrap_price?: number | null
           id?: string
           image_url?: string | null
+          mrp?: number | null
+          order_by_date?: string | null
+          price?: number | null
           section?: string
+          stock_count?: number | null
           subtitle?: string | null
           title?: string | null
           updated_at?: string | null
           updated_by?: string | null
+          whatsapp_number?: string | null
         }
         Relationships: []
       }

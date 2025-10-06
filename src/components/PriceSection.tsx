@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,11 +24,28 @@ const PriceSection = () => {
   const [giftNote, setGiftNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [content, setContent] = useState<any>(null);
   const { toast } = useToast();
 
-  const basePrice = 699;
-  const mrp = 999;
-  const giftWrapPrice = giftWrap ? 49 : 0;
+  useEffect(() => {
+    loadContent();
+  }, []);
+
+  const loadContent = async () => {
+    const { data } = await supabase
+      .from("page_content")
+      .select("*")
+      .eq("section", "pricing")
+      .single();
+    
+    if (data) setContent(data);
+  };
+
+  if (!content) return null;
+
+  const basePrice = content.price || 699;
+  const mrp = content.mrp || 999;
+  const giftWrapPrice = giftWrap ? (content.gift_wrap_price || 49) : 0;
   const totalPrice = basePrice + giftWrapPrice;
   const savings = mrp - basePrice;
 
@@ -137,10 +154,10 @@ const PriceSection = () => {
             <div className="bg-gradient-primary p-6 text-center text-primary-foreground">
               <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full mb-4">
                 <Clock className="h-4 w-4" />
-                <span className="text-sm font-medium">Only 47 Diwali Gift Kits left</span>
+                <span className="text-sm font-medium">{content.subtitle}</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold">
-                Special Diwali Pricing
+                {content.title}
               </h2>
             </div>
 
@@ -154,7 +171,7 @@ const PriceSection = () => {
                   <span className="text-5xl font-bold text-primary">₹{basePrice}</span>
                 </div>
                 <p className="text-lg text-secondary font-semibold">
-                  Save ₹{savings} (30% off)
+                  {content.description}
                 </p>
               </div>
 
@@ -168,7 +185,7 @@ const PriceSection = () => {
                   />
                   <div className="flex-1">
                     <Label htmlFor="gift-wrap" className="font-semibold cursor-pointer">
-                      Premium Gift Wrap +₹{49}
+                      Premium Gift Wrap +₹{content.gift_wrap_price}
                     </Label>
                     <p className="text-sm text-muted-foreground mt-1">
                       Beautiful orange & gold festive packaging
@@ -236,7 +253,7 @@ const PriceSection = () => {
               </div>
 
               <p className="text-center text-sm text-muted-foreground mt-4">
-                Free delivery across India • Secure payment
+                {content.content_json?.delivery_note}
               </p>
             </div>
           </div>

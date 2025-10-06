@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import Dashboard from "@/components/admin/Dashboard";
 import OrdersTable from "@/components/admin/OrdersTable";
+import { ContentEditor } from "@/components/admin/ContentEditor";
 
 interface PageContent {
   id: string;
@@ -20,6 +21,13 @@ interface PageContent {
   description: string | null;
   button_text: string | null;
   button_link: string | null;
+  price: number | null;
+  mrp: number | null;
+  gift_wrap_price: number | null;
+  whatsapp_number: string | null;
+  order_by_date: string | null;
+  stock_count: number | null;
+  content_json: any;
 }
 
 interface Order {
@@ -234,82 +242,7 @@ const Admin = () => {
             )}
             
             {currentTab === "content" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-3xl font-bold mb-2">Page Content</h2>
-                  <p className="text-muted-foreground">Manage your landing page content</p>
-                </div>
-                
-                <div className="grid gap-6">
-                  {content.map((item) => (
-                    <Card key={item.id}>
-                      <CardHeader>
-                        <CardTitle className="capitalize">{item.section} Section</CardTitle>
-                        <CardDescription>Update content for the {item.section} section</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Title</label>
-                          <Input
-                            value={item.title || ""}
-                            onChange={(e) => updateField(item.id, "title", e.target.value)}
-                            placeholder="Enter title"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Subtitle</label>
-                          <Input
-                            value={item.subtitle || ""}
-                            onChange={(e) => updateField(item.id, "subtitle", e.target.value)}
-                            placeholder="Enter subtitle"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Description</label>
-                          <Textarea
-                            value={item.description || ""}
-                            onChange={(e) => updateField(item.id, "description", e.target.value)}
-                            placeholder="Enter description"
-                            rows={3}
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">Button Text</label>
-                            <Input
-                              value={item.button_text || ""}
-                              onChange={(e) => updateField(item.id, "button_text", e.target.value)}
-                              placeholder="Enter button text"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">Button Link</label>
-                            <Input
-                              value={item.button_link || ""}
-                              onChange={(e) => updateField(item.id, "button_link", e.target.value)}
-                              placeholder="Enter button link"
-                            />
-                          </div>
-                        </div>
-                        <Button 
-                          onClick={() => handleUpdate(item)}
-                          disabled={saving === item.id}
-                          className="w-full"
-                        >
-                          {saving === item.id ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Saving...
-                            </>
-                          ) : (
-                            "Save Changes"
-                          )}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
+              <ContentEditor content={content} onUpdate={loadContent} />
             )}
           </div>
         </main>
