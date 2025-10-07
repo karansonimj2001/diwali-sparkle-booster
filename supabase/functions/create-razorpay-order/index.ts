@@ -6,6 +6,34 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation and sanitization functions
+const sanitizeText = (text: string, maxLength: number): string => {
+  if (!text) return '';
+  // Remove any control characters and trim
+  return text.replace(/[\x00-\x1F\x7F]/g, '').trim().slice(0, maxLength);
+};
+
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 255;
+};
+
+const validatePhone = (phone: string): boolean => {
+  // Allow digits, spaces, +, -, (, )
+  const phoneRegex = /^[\d\s\+\-\(\)]+$/;
+  return phoneRegex.test(phone) && phone.length <= 20;
+};
+
+const validatePincode = (pincode: string): boolean => {
+  // Allow only alphanumeric characters
+  const pincodeRegex = /^[A-Za-z0-9\s\-]+$/;
+  return pincodeRegex.test(pincode) && pincode.length <= 10;
+};
+
+const validateAmount = (amount: number): boolean => {
+  return Number.isInteger(amount) && amount > 0 && amount <= 10000000; // Max 1 crore
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -27,7 +55,55 @@ serve(async (req) => {
       shippingPincode
     } = await req.json();
 
-    console.log('Creating order with amount:', amount);
+    // Validate and sanitize all input data
+    if (!validateAmount(amount)) {
+      throw new Error('Invalid amount: must be a positive integer not exceeding 10000000');
+    }
+
+    const sanitizedCustomerName = sanitizeText(customerName, 100);
+    const sanitizedCustomerEmail = sanitizeText(customerEmail, 255);
+    const sanitizedCustomerPhone = sanitizeText(customerPhone, 20);
+    const sanitizedShippingAddress = sanitizeText(shippingAddress, 500);
+    const sanitizedShippingCity = sanitizeText(shippingCity, 100);
+    const sanitizedShippingState = sanitizeText(shippingState, 100);
+    const sanitizedShippingPincode = sanitizeText(shippingPincode, 10);
+    const sanitizedGiftNote = sanitizeText(giftNote || '', 500);
+
+    // Validate required fields
+    if (!sanitizedCustomerName || sanitizedCustomerName.length < 2) {
+      throw new Error('Customer name is required and must be at least 2 characters');
+    }
+
+    if (!validateEmail(sanitizedCustomerEmail)) {
+      throw new Error('Invalid email address');
+    }
+
+    if (!validatePhone(sanitizedCustomerPhone)) {
+      throw new Error('Invalid phone number format');
+    }
+
+    if (!sanitizedShippingAddress || sanitizedShippingAddress.length < 10) {
+      throw new Error('Shipping address is required and must be at least 10 characters');
+    }
+
+    if (!sanitizedShippingCity || sanitizedShippingCity.length < 2) {
+      throw new Error('Shipping city is required');
+    }
+
+    if (!sanitizedShippingState || sanitizedShippingState.length < 2) {
+      throw new Error('Shipping state is required');
+    }
+
+    if (!validatePincode(sanitizedShippingPincode)) {
+      throw new Error('Invalid pincode format');
+    }
+
+    // Validate currency
+    if (!['INR', 'USD', 'EUR'].includes(currency)) {
+      throw new Error('Invalid currency');
+    }
+
+    console.log('Creating order with validated amount:', amount);
 
     const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID');
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
@@ -85,16 +161,16 @@ serve(async (req) => {
         amount,
         currency,
         status: 'created',
-        gift_wrap: giftWrap,
-        gift_note: giftNote,
-        hide_price: hidePrice,
-        customer_email: customerEmail,
-        customer_phone: customerPhone,
-        customer_name: customerName,
-        shipping_address: shippingAddress,
-        shipping_city: shippingCity,
-        shipping_state: shippingState,
-        shipping_pincode: shippingPincode,
+        gift_wrap: Boolean(giftWrap),
+        gift_note: sanitizedGiftNote || null,
+        hide_price: Boolean(hidePrice),
+        customer_email: sanitizedCustomerEmail,
+        customer_phone: sanitizedCustomerPhone,
+        customer_name: sanitizedCustomerName,
+        shipping_address: sanitizedShippingAddress,
+        shipping_city: sanitizedShippingCity,
+        shipping_state: sanitizedShippingState,
+        shipping_pincode: sanitizedShippingPincode,
       })
       .select()
       .single();
