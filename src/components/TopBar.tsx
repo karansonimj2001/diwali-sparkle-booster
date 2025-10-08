@@ -7,6 +7,25 @@ const TopBar = () => {
 
   useEffect(() => {
     loadContent();
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('topbar-content-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'page_content',
+          filter: 'section=eq.topbar'
+        },
+        () => loadContent()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadContent = async () => {

@@ -8,6 +8,25 @@ const BenefitsStrip = () => {
 
   useEffect(() => {
     loadContent();
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('benefits-content-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'page_content',
+          filter: 'section=eq.benefits'
+        },
+        () => loadContent()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadContent = async () => {

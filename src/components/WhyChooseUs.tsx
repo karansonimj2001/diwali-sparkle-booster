@@ -8,6 +8,25 @@ const WhyChooseUs = () => {
 
   useEffect(() => {
     loadContent();
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('why-choose-us-content-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'page_content',
+          filter: 'section=eq.why_choose_us'
+        },
+        () => loadContent()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadContent = async () => {

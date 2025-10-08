@@ -11,6 +11,25 @@ const ProductGallery = () => {
 
   useEffect(() => {
     loadContent();
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('product-gallery-content-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'page_content',
+          filter: 'section=eq.product_gallery'
+        },
+        () => loadContent()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadContent = async () => {
